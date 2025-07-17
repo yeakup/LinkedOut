@@ -2,23 +2,23 @@ import { useState, useEffect } from 'react';
 import { postService } from '../services/dataService';
 
 function LastPosts({ refreshTrigger }) {
-  const [recentPosts, setRecentPosts] = useState([]);
+  const [mostLikedPosts, setMostLikedPosts] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  const fetchRecentPosts = async () => {
+  const fetchMostLikedPosts = async () => {
     try {
-      const posts = await postService.getRecentPosts(5);
-      setRecentPosts(posts);
+      const posts = await postService.getMostLikedPosts(5);
+      setMostLikedPosts(posts);
     } catch (error) {
-      console.error('Error fetching recent posts:', error);
-      setRecentPosts([]);
+      console.error('Error fetching most liked posts:', error);
+      setMostLikedPosts([]);
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    fetchRecentPosts();
+    fetchMostLikedPosts();
   }, [refreshTrigger]);
 
   if (loading) {
@@ -39,14 +39,16 @@ function LastPosts({ refreshTrigger }) {
 
   return (
     <div className="bg-white rounded-lg border border-gray-200 p-4">
-      <h3 className="font-semibold text-gray-900 mb-3">Last Posts</h3>
+      <h3 className="font-semibold text-gray-900 mb-3">Most Liked</h3>
       <div className="space-y-3">
-        {recentPosts.map(post => (
+        {mostLikedPosts.map(post => (
           <div key={post.id}>
             <h4 className="text-sm font-medium text-gray-900">
               {post.content.length > 50 ? `${post.content.substring(0, 50)}...` : post.content}
             </h4>
-            <p className="text-xs text-gray-600">{post.timeAgo} ago • {post.user.name}</p>
+            <p className="text-xs text-gray-600">
+              {post.likes} likes • {post.timeAgo} ago • {post.user.name}
+            </p>
           </div>
         ))}
       </div>
@@ -55,6 +57,7 @@ function LastPosts({ refreshTrigger }) {
 }
 
 export default LastPosts;
+
 
 
 

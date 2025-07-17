@@ -31,7 +31,8 @@ function LandingPage() {
         setIsLogin(true);
       }
     } catch (error) {
-      alert(error.message || 'Authentication failed. Please try again.');
+      // Error handling is now done in AuthContext with toast notifications
+      console.error('Authentication error:', error);
     } finally {
       setLoading(false);
     }
@@ -193,6 +194,7 @@ function LandingPage() {
 }
 
 export default LandingPage;
+
 
 
 

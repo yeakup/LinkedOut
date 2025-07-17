@@ -1,8 +1,32 @@
+import { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
+import { postService } from '../services/dataService';
 import UserAvatar from './UserAvatar';
 
-function ProfileCard() {
+function ProfileCard({ refreshTrigger, onMyItemsClick }) {
   const { user } = useAuth();
+  const [userStats, setUserStats] = useState({
+    postsCount: 0,
+    totalLikes: 0
+  });
+
+  useEffect(() => {
+    const fetchUserStats = async () => {
+      if (!user?.id) return;
+      
+      try {
+        const userPosts = await postService.getPostsByUser(user.id);
+        const postsCount = userPosts.length;
+        const totalLikes = userPosts.reduce((sum, post) => sum + (post.likes || 0), 0);
+        
+        setUserStats({ postsCount, totalLikes });
+      } catch (error) {
+        console.error('Error fetching user stats:', error);
+      }
+    };
+
+    fetchUserStats();
+  }, [user?.id, refreshTrigger]);
 
   if (!user) return null;
 
@@ -38,22 +62,25 @@ function ProfileCard() {
         </div>
         
         {/* Stats */}
-        <div className="border-t mt-4 pt-4">
+        <div className="border-t mt-4 pt-4 px-8">
           <div className="flex justify-between text-sm">
             <div className="text-center">
-              <span className="block text-gray-500 text-xs">Profile viewers</span>
-              <p className="font-semibold text-blue-600 text-sm">142</p>
+              <span className="block text-gray-500 text-xs">Posts sent</span>
+              <p className="font-semibold text-blue-600 text-sm">{userStats.postsCount}</p>
             </div>
             <div className="text-center">
-              <span className="block text-gray-500 text-xs">Post impressions</span>
-              <p className="font-semibold text-blue-600 text-sm">1,204</p>
+              <span className="block text-gray-500 text-xs">Likes</span>
+              <p className="font-semibold text-blue-600 text-sm">{userStats.totalLikes}</p>
             </div>
           </div>
         </div>
         
         {/* My Items */}
         <div className="border-t mt-4 pt-4">
-          <div className="flex items-center space-x-2 text-sm text-gray-700 hover:bg-gray-50 -mx-4 px-4 py-2 cursor-pointer">
+          <div 
+            onClick={onMyItemsClick}
+            className="flex items-center space-x-2 text-sm text-gray-700 hover:bg-gray-50 -mx-4 px-4 py-2 cursor-pointer"
+          >
             <svg className="w-4 h-4 text-gray-600" fill="currentColor" viewBox="0 0 24 24">
               <path d="M17 3H7c-1.1 0-2 .9-2 2v16l7-3 7 3V5c0-1.1-.9-2-2-2z"/>
             </svg>
@@ -66,6 +93,11 @@ function ProfileCard() {
 }
 
 export default ProfileCard;
+
+
+
+
+
 
 
 

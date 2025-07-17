@@ -1,8 +1,10 @@
 import { useState, useRef } from 'react';
+import { useToast } from '../contexts/ToastContext';
 
 function Contact() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const formRef = useRef();
+  const { showToast } = useToast();
 
   async function handleSubmit(formData) {
     setIsSubmitting(true);
@@ -10,9 +12,9 @@ function Contact() {
       // Simulate API call
       await new Promise(resolve => setTimeout(resolve, 1000));
       formRef.current.reset();
-      alert('Message sent successfully!');
+      showToast('Message sent successfully!', 'success');
     } catch (error) {
-      alert('Failed to send message');
+      showToast('Failed to send message', 'error');
     } finally {
       setIsSubmitting(false);
     }
@@ -61,4 +63,5 @@ function Contact() {
 }
 
 export default Contact;
+
 

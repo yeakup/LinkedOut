@@ -3,8 +3,9 @@ import { Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import UserAvatar from './UserAvatar';
 
-function Navbar() {
+function Navbar({ onSearch }) {
   const [showDropdown, setShowDropdown] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
   const { user, signOut } = useAuth();
 
   const handleSignOut = async () => {
@@ -13,6 +14,14 @@ function Navbar() {
       setShowDropdown(false);
     } catch (error) {
       console.error('Error signing out:', error);
+    }
+  };
+
+  const handleSearchSubmit = (e) => {
+    e.preventDefault();
+    if (onSearch && searchTerm.trim()) {
+      onSearch(searchTerm.trim());
+      setSearchTerm(''); // Clear search input after search
     }
   };
 
@@ -26,11 +35,20 @@ function Navbar() {
               LinkedOut
             </Link>
             <div className="hidden md:block">
-              <input
-                type="text"
-                placeholder="Search"
-                className="w-64 px-3 py-1.5 bg-gray-100 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
+              <form onSubmit={handleSearchSubmit} className="relative">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <svg className="w-4 h-4 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clipRule="evenodd" />
+                  </svg>
+                </div>
+                <input
+                  type="text"
+                  placeholder="Search"
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="w-64 pl-10 pr-4 py-2 bg-white border border-gray-300 rounded-full text-sm placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-blue-300 focus:border-blue-300 transition-colors"
+                />
+              </form>
             </div>
           </div>
 
@@ -95,6 +113,11 @@ function Navbar() {
 }
 
 export default Navbar;
+
+
+
+
+
 
 
 

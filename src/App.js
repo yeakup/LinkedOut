@@ -22,13 +22,12 @@ function AppContent() {
   return (
     <Router>
       <div className="min-h-screen bg-gray-50 flex flex-col">
-        <Navbar />
         <main className="flex-1">
           <Suspense fallback={null}>
             <Routes>
               <Route path="/" element={<Home />} />
-              <Route path="/about" element={<About />} />
-              <Route path="/contact" element={<Contact />} />
+              <Route path="/about" element={<><Navbar /><About /></>} />
+              <Route path="/contact" element={<><Navbar /><Contact /></>} />
             </Routes>
           </Suspense>
         </main>
@@ -51,6 +50,7 @@ function App() {
 }
 
 export default App;
+
 
 
 

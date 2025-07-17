@@ -41,7 +41,7 @@ function AddPost({ onPostAdded }) {
           <UserAvatar name={user?.name} size="md" />
           <button
             onClick={() => setShowComposer(true)}
-            className="flex-1 text-left p-3 border border-gray-300 rounded-full hover:bg-gray-50 text-gray-500 font-medium transition-colors"
+            className="flex-1 text-left pl-4 p-3 border border-gray-300 rounded-full hover:bg-gray-50 text-gray-500 transition-colors"
           >
             Start a post...
           </button>
