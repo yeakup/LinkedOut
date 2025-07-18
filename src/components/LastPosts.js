@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { postService } from '../services/dataService';
 
-function LastPosts({ refreshTrigger }) {
+function LastPosts({ refreshTrigger, onPostClick }) {
   const [mostLikedPosts, setMostLikedPosts] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -40,9 +40,13 @@ function LastPosts({ refreshTrigger }) {
   return (
     <div className="bg-white rounded-lg border border-gray-200 p-4">
       <h3 className="font-semibold text-gray-900 mb-3">Most Liked</h3>
-      <div className="space-y-3">
+      <div className="space-y-1">
         {mostLikedPosts.map(post => (
-          <div key={post.id}>
+          <div 
+            key={post.id}
+            onClick={() => onPostClick && onPostClick(post.id)}
+            className="p-2 rounded-lg hover:bg-gray-100 cursor-pointer transition-colors"
+          >
             <h4 className="text-sm font-medium text-gray-900">
               {post.content.length > 50 ? `${post.content.substring(0, 50)}...` : post.content}
             </h4>
@@ -57,6 +61,7 @@ function LastPosts({ refreshTrigger }) {
 }
 
 export default LastPosts;
+
 
 
 

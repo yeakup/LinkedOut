@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import UserAvatar from './UserAvatar';
 
-function Navbar({ onSearch }) {
+function Navbar({ onSearch, onHomeClick }) {
   const [showDropdown, setShowDropdown] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const { user, signOut } = useAuth();
@@ -25,14 +25,25 @@ function Navbar({ onSearch }) {
     }
   };
 
+  const handleHomeClick = () => {
+    if (onHomeClick) {
+      onHomeClick();
+    }
+  };
+
   return (
     <nav className="bg-white border-b border-gray-200 sticky top-0 z-40">
       <div className="max-w-6xl mx-auto px-4">
         <div className="flex justify-between items-center h-14">
           {/* Logo and Search */}
           <div className="flex items-center space-x-4">
-            <Link to="/" className="text-blue-600 font-bold text-xl">
-              LinkedOut
+            <Link to="/" onClick={handleHomeClick} className="flex items-center">
+              <div className="flex items-center space-x-1">
+                <svg className="w-8 h-8 text-blue-600" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/>
+                </svg>
+                <span className="text-xl font-bold text-gray-800">Out</span>
+              </div>
             </Link>
             <div className="hidden md:block">
               <form onSubmit={handleSearchSubmit} className="relative">
@@ -54,7 +65,7 @@ function Navbar({ onSearch }) {
 
           {/* Navigation Items */}
           <div className="flex items-center space-x-6">
-            <Link to="/" className="flex flex-col items-center text-gray-600 hover:text-gray-900 transition-colors">
+            <Link to="/" onClick={handleHomeClick} className="flex flex-col items-center text-gray-600 hover:text-gray-900 transition-colors">
               <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
                 <path d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z" />
               </svg>
@@ -113,6 +124,9 @@ function Navbar({ onSearch }) {
 }
 
 export default Navbar;
+
+
+
 
 
 

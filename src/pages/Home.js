@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import ProfileCard from '../components/ProfileCard';
 import MainFeed from '../components/MainFeed';
@@ -9,6 +9,7 @@ function Home() {
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   const [filterUserId, setFilterUserId] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
+  const [selectedPostId, setSelectedPostId] = useState(null);
   const { user } = useAuth();
 
   const handlePostAdded = () => {
@@ -29,14 +30,21 @@ function Home() {
     setFilterUserId(null); // Clear user filter when searching
   };
 
-  const clearAllFilters = () => {
+  const handlePostClick = (postId) => {
+    setSelectedPostId(postId);
     setFilterUserId(null);
     setSearchTerm('');
   };
 
+  const clearAllFilters = () => {
+    setFilterUserId(null);
+    setSearchTerm('');
+    setSelectedPostId(null);
+  };
+
   return (
     <>
-      <Navbar onSearch={handleSearch} />
+      <Navbar onSearch={handleSearch} onHomeClick={clearAllFilters} />
       <div className="max-w-6xl mx-auto px-4 py-6">
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
           {/* Left Sidebar - Profile Card */}
@@ -49,7 +57,7 @@ function Home() {
 
           {/* Main Feed */}
           <div className="lg:col-span-2">
-            {(filterUserId || searchTerm) && (
+            {(filterUserId || searchTerm || selectedPostId) && (
               <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-4">
                 <div className="flex items-center justify-between">
                   {filterUserId && (
@@ -59,6 +67,9 @@ function Home() {
                     <span className="text-blue-800 font-medium">
                       Showing posts containing "<span className="font-bold">{searchTerm}</span>"
                     </span>
+                  )}
+                  {selectedPostId && (
+                    <span className="text-blue-800 font-medium">Showing selected post</span>
                   )}
                   <button 
                     onClick={clearAllFilters}
@@ -74,12 +85,16 @@ function Home() {
               onLikeChanged={handleLikeChanged}
               filterUserId={filterUserId}
               searchTerm={searchTerm}
+              selectedPostId={selectedPostId}
             />
           </div>
 
           {/* Right Sidebar - Last Posts */}
           <div className="lg:col-span-1">
-            <LastPosts refreshTrigger={refreshTrigger} />
+            <LastPosts 
+              refreshTrigger={refreshTrigger} 
+              onPostClick={handlePostClick}
+            />
           </div>
         </div>
       </div>
@@ -88,4 +103,6 @@ function Home() {
 }
 
 export default Home;
+
+
 

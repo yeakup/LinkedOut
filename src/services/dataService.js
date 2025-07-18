@@ -9,7 +9,8 @@ import {
   orderBy, 
   limit,
   where,
-  serverTimestamp 
+  serverTimestamp,
+  startAfter
 } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 
@@ -29,12 +30,20 @@ const formatTimeAgo = (timestamp) => {
 
 // User services
 export const userService = {
-  getUserById: async (id) => {
-    const userDoc = await getDoc(doc(db, 'users', id));
-    if (userDoc.exists()) {
-      return { id: userDoc.id, ...userDoc.data() };
+  getUserById: async (userId) => {
+    try {
+      const userDoc = await getDoc(doc(db, 'users', userId));
+      if (userDoc.exists()) {
+        return {
+          id: userDoc.id,
+          ...userDoc.data()
+        };
+      }
+      return null;
+    } catch (error) {
+      console.error('Error fetching user by ID:', error);
+      return null;
     }
-    throw new Error('User not found');
   },
 
   createUser: async (userData) => {
@@ -56,12 +65,25 @@ export const userService = {
 
 // Post services
 export const postService = {
-  getAllPosts: async () => {
-    const q = query(
-      collection(db, 'posts'),
-      orderBy('createdAt', 'desc'),
-      limit(20)
-    );
+  getAllPosts: async (limitCount = 10, lastPostId = null) => {
+    let q;
+    
+    if (lastPostId) {
+      // Get the last post document for pagination
+      const lastPostDoc = await getDoc(doc(db, 'posts', lastPostId));
+      q = query(
+        collection(db, 'posts'),
+        orderBy('createdAt', 'desc'),
+        startAfter(lastPostDoc),
+        limit(limitCount)
+      );
+    } else {
+      q = query(
+        collection(db, 'posts'),
+        orderBy('createdAt', 'desc'),
+        limit(limitCount)
+      );
+    }
     
     const querySnapshot = await getDocs(q);
     const posts = [];
@@ -221,6 +243,31 @@ export const postService = {
     }
     
     return posts;
+  },
+  
+  getPostById: async (postId) => {
+    try {
+      const postDoc = await getDoc(doc(db, 'posts', postId));
+      if (!postDoc.exists()) {
+        return null;
+      }
+      
+      const postData = postDoc.data();
+      
+      // Get user data
+      const userDoc = await getDoc(doc(db, 'users', postData.userId));
+      const userData = userDoc.exists() ? userDoc.data() : null;
+      
+      return {
+        id: postDoc.id,
+        ...postData,
+        user: userData,
+        timeAgo: formatTimeAgo(postData.createdAt)
+      };
+    } catch (error) {
+      console.error('Error fetching post by ID:', error);
+      return null;
+    }
   }
 };
 
@@ -299,6 +346,135 @@ export const likeService = {
     }
   }
 };
+
+// Comment services
+export const commentService = {
+  addComment: async (postId, userId, content) => {
+    try {
+      const commentData = {
+        content,
+        userId,
+        postId,
+        likes: 0,
+        likedBy: [],
+        createdAt: serverTimestamp()
+      };
+      
+      const docRef = await addDoc(collection(db, 'comments'), commentData);
+      
+      // Update post comment count
+      const postRef = doc(db, 'posts', postId);
+      const postDoc = await getDoc(postRef);
+      if (postDoc.exists()) {
+        const currentComments = postDoc.data().comments || 0;
+        await updateDoc(postRef, { comments: currentComments + 1 });
+      }
+      
+      // Get user data for the response
+      const userDoc = await getDoc(doc(db, 'users', userId));
+      const userData = userDoc.exists() ? userDoc.data() : null;
+      
+      return {
+        id: docRef.id,
+        ...commentData,
+        user: userData,
+        timeAgo: 'now'
+      };
+    } catch (error) {
+      console.error('Error adding comment:', error);
+      throw error;
+    }
+  },
+
+  getCommentsByPost: async (postId) => {
+    try {
+      const q = query(
+        collection(db, 'comments'),
+        where('postId', '==', postId),
+        orderBy('createdAt', 'desc')
+      );
+      
+      const querySnapshot = await getDocs(q);
+      const comments = [];
+      
+      for (const commentDoc of querySnapshot.docs) {
+        const commentData = commentDoc.data();
+        
+        // Get user data
+        const userDoc = await getDoc(doc(db, 'users', commentData.userId));
+        const userData = userDoc.exists() ? userDoc.data() : null;
+        
+        comments.push({
+          id: commentDoc.id,
+          ...commentData,
+          user: userData,
+          timeAgo: formatTimeAgo(commentData.createdAt)
+        });
+      }
+      
+      return comments;
+    } catch (error) {
+      console.error('Error fetching comments:', error);
+      return [];
+    }
+  },
+
+  toggleCommentLike: async (commentId, userId) => {
+    try {
+      const commentRef = doc(db, 'comments', commentId);
+      const commentDoc = await getDoc(commentRef);
+      
+      if (!commentDoc.exists()) {
+        throw new Error('Comment not found');
+      }
+      
+      const commentData = commentDoc.data();
+      const likedBy = commentData.likedBy || [];
+      const isLiked = likedBy.includes(userId);
+      
+      if (isLiked) {
+        // Unlike
+        const updatedLikedBy = likedBy.filter(id => id !== userId);
+        await updateDoc(commentRef, { 
+          likedBy: updatedLikedBy,
+          likes: updatedLikedBy.length 
+        });
+        return { isLiked: false, likesCount: updatedLikedBy.length };
+      } else {
+        // Like
+        const updatedLikedBy = [...likedBy, userId];
+        await updateDoc(commentRef, { 
+          likedBy: updatedLikedBy,
+          likes: updatedLikedBy.length 
+        });
+        return { isLiked: true, likesCount: updatedLikedBy.length };
+      }
+    } catch (error) {
+      console.error('Error toggling comment like:', error);
+      throw error;
+    }
+  },
+
+  checkIfCommentLiked: async (commentId, userId) => {
+    try {
+      const commentDoc = await getDoc(doc(db, 'comments', commentId));
+      if (commentDoc.exists()) {
+        const commentData = commentDoc.data();
+        const likedBy = commentData.likedBy || [];
+        return likedBy.includes(userId);
+      }
+      return false;
+    } catch (error) {
+      console.error('Error checking comment like status:', error);
+      return false;
+    }
+  }
+};
+
+
+
+
+
 
 
 
