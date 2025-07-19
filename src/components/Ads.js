@@ -8,14 +8,14 @@ function Ads() {
       id: 1,
       title: "Premium Video Platform",
       image: "/ads/video.png",
-      url: "https://example.com/video-platform",
+      url: "https://vid-plat.onrender.com/",
       alt: "Premium video platform"
     },
     {
       id: 2,
       title: "Fitness & Gym Training",
       image: "/ads/gym.png", 
-      url: "https://example.com/gym-training",
+      url: "https://vid-plat.onrender.com/",
       alt: "Join fitness and gym training"
     }
   ];
