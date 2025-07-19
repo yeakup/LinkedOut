@@ -53,12 +53,12 @@ function LandingPage() {
           <div className="text-center lg:text-left">
             <div className="mb-8">
               <img 
-                src="/logo.png" 
-                alt="LinkedOut Logo" 
-                className="w-64 h-64 mx-auto object-contain"
+                src="/illustration.svg" 
+                alt="LinkedOut Illustration" 
+                className="w-128 h-128 mx-auto object-contain"
               />
             </div>
-            <h1 className="text-4xl lg:text-5xl font-light text-gray-900 mb-6">
+            <h1 className="text-2xl lg:text-4xl font-semibold text-gray-800 mb-6">
               Welcome to your unprofessional community
             </h1>
             <p className="text-xl text-gray-600 max-w-lg mx-auto lg:mx-0">
@@ -196,6 +196,7 @@ function LandingPage() {
 }
 
 export default LandingPage;
+
 
 
 
