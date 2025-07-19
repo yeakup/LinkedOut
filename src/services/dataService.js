@@ -66,44 +66,49 @@ export const userService = {
 // Post services
 export const postService = {
   getAllPosts: async (limitCount = 10, lastPostId = null) => {
-    let q;
-    
-    if (lastPostId) {
-      // Get the last post document for pagination
-      const lastPostDoc = await getDoc(doc(db, 'posts', lastPostId));
-      q = query(
-        collection(db, 'posts'),
-        orderBy('createdAt', 'desc'),
-        startAfter(lastPostDoc),
-        limit(limitCount)
-      );
-    } else {
-      q = query(
+    try {
+      let q = query(
         collection(db, 'posts'),
         orderBy('createdAt', 'desc'),
         limit(limitCount)
       );
+
+      if (lastPostId) {
+        const lastPostDoc = await getDoc(doc(db, 'posts', lastPostId));
+        q = query(
+          collection(db, 'posts'),
+          orderBy('createdAt', 'desc'),
+          startAfter(lastPostDoc),
+          limit(limitCount)
+        );
+      }
+
+      const querySnapshot = await getDocs(q);
+      const posts = [];
+
+      for (const postDoc of querySnapshot.docs) {
+        const postData = postDoc.data();
+        
+        // Get user data and include the user ID
+        const userDoc = await getDoc(doc(db, 'users', postData.userId));
+        const userData = userDoc.exists() ? { 
+          id: postData.userId, // Add the user ID here
+          ...userDoc.data() 
+        } : null;
+
+        posts.push({
+          id: postDoc.id,
+          ...postData,
+          user: userData,
+          timeAgo: formatTimeAgo(postData.createdAt)
+        });
+      }
+
+      return posts;
+    } catch (error) {
+      console.error('Error fetching posts:', error);
+      return [];
     }
-    
-    const querySnapshot = await getDocs(q);
-    const posts = [];
-    
-    for (const postDoc of querySnapshot.docs) {
-      const postData = postDoc.data();
-      
-      // Get user data
-      const userDoc = await getDoc(doc(db, 'users', postData.userId));
-      const userData = userDoc.exists() ? userDoc.data() : null;
-      
-      posts.push({
-        id: postDoc.id,
-        ...postData,
-        user: userData,
-        timeAgo: formatTimeAgo(postData.createdAt)
-      });
-    }
-    
-    return posts;
   },
   
   createPost: async ({ content, userId }) => {
@@ -159,59 +164,75 @@ export const postService = {
   },
   
   getPostsByUser: async (userId) => {
-    const q = query(
-      collection(db, 'posts'),
-      where('userId', '==', userId),
-      orderBy('createdAt', 'desc'),
-      limit(10)
-    );
-    
-    const querySnapshot = await getDocs(q);
-    const posts = [];
-    
-    // Get user data once
-    const userDoc = await getDoc(doc(db, 'users', userId));
-    const userData = userDoc.exists() ? userDoc.data() : null;
-    
-    querySnapshot.docs.forEach(postDoc => {
-      const postData = postDoc.data();
-      posts.push({
-        id: postDoc.id,
-        ...postData,
-        user: userData,
-        timeAgo: formatTimeAgo(postData.createdAt)
-      });
-    });
-    
-    return posts;
+    try {
+      const q = query(
+        collection(db, 'posts'),
+        where('userId', '==', userId),
+        orderBy('createdAt', 'desc')
+      );
+
+      const querySnapshot = await getDocs(q);
+      const posts = [];
+
+      for (const postDoc of querySnapshot.docs) {
+        const postData = postDoc.data();
+        
+        // Get user data and include the user ID
+        const userDoc = await getDoc(doc(db, 'users', postData.userId));
+        const userData = userDoc.exists() ? { 
+          id: postData.userId, // Add the user ID here
+          ...userDoc.data() 
+        } : null;
+
+        posts.push({
+          id: postDoc.id,
+          ...postData,
+          user: userData,
+          timeAgo: formatTimeAgo(postData.createdAt)
+        });
+      }
+
+      return posts;
+    } catch (error) {
+      console.error('Error fetching posts by user:', error);
+      return [];
+    }
   },
   
   getMostLikedPosts: async (limitCount = 5) => {
-    const q = query(
-      collection(db, 'posts'),
-      orderBy('likes', 'desc'),
-      limit(limitCount)
-    );
-    
-    const querySnapshot = await getDocs(q);
-    const posts = [];
-    
-    for (const postDoc of querySnapshot.docs) {
-      const postData = postDoc.data();
-      
-      // Get user data
-      const userDoc = await getDoc(doc(db, 'users', postData.userId));
-      const userData = userDoc.exists() ? userDoc.data() : null;
-      
-      posts.push({
-        id: postDoc.id,
-        ...postData,
-        user: userData,
-        timeAgo: formatTimeAgo(postData.createdAt)
-      });
+    try {
+      const q = query(
+        collection(db, 'posts'),
+        orderBy('likes', 'desc'),
+        limit(limitCount)
+      );
+
+      const querySnapshot = await getDocs(q);
+      const posts = [];
+
+      for (const postDoc of querySnapshot.docs) {
+        const postData = postDoc.data();
+        
+        // Get user data and include the user ID
+        const userDoc = await getDoc(doc(db, 'users', postData.userId));
+        const userData = userDoc.exists() ? { 
+          id: postData.userId, // Add the user ID here
+          ...userDoc.data() 
+        } : null;
+
+        posts.push({
+          id: postDoc.id,
+          ...postData,
+          user: userData,
+          timeAgo: formatTimeAgo(postData.createdAt)
+        });
+      }
+
+      return posts;
+    } catch (error) {
+      console.error('Error fetching most liked posts:', error);
+      return [];
     }
-    
-    return posts;
   },
   
   searchPosts: async (searchTerm) => {
@@ -251,13 +272,16 @@ export const postService = {
       if (!postDoc.exists()) {
         return null;
       }
-      
+
       const postData = postDoc.data();
       
-      // Get user data
+      // Get user data and include the user ID
       const userDoc = await getDoc(doc(db, 'users', postData.userId));
-      const userData = userDoc.exists() ? userDoc.data() : null;
-      
+      const userData = userDoc.exists() ? { 
+        id: postData.userId, // Add the user ID here
+        ...userDoc.data() 
+      } : null;
+
       return {
         id: postDoc.id,
         ...postData,
@@ -352,28 +376,22 @@ export const commentService = {
   addComment: async (postId, userId, content) => {
     try {
       const commentData = {
-        content,
-        userId,
         postId,
+        userId,
+        content,
         likes: 0,
-        likedBy: [],
         createdAt: serverTimestamp()
       };
-      
+
       const docRef = await addDoc(collection(db, 'comments'), commentData);
       
-      // Update post comment count
-      const postRef = doc(db, 'posts', postId);
-      const postDoc = await getDoc(postRef);
-      if (postDoc.exists()) {
-        const currentComments = postDoc.data().comments || 0;
-        await updateDoc(postRef, { comments: currentComments + 1 });
-      }
-      
-      // Get user data for the response
+      // Get user data and include the user ID
       const userDoc = await getDoc(doc(db, 'users', userId));
-      const userData = userDoc.exists() ? userDoc.data() : null;
-      
+      const userData = userDoc.exists() ? { 
+        id: userId, // Add the user ID here
+        ...userDoc.data() 
+      } : null;
+
       return {
         id: docRef.id,
         ...commentData,
@@ -393,17 +411,20 @@ export const commentService = {
         where('postId', '==', postId),
         orderBy('createdAt', 'desc')
       );
-      
+
       const querySnapshot = await getDocs(q);
       const comments = [];
-      
+
       for (const commentDoc of querySnapshot.docs) {
         const commentData = commentDoc.data();
         
-        // Get user data
+        // Get user data and include the user ID
         const userDoc = await getDoc(doc(db, 'users', commentData.userId));
-        const userData = userDoc.exists() ? userDoc.data() : null;
-        
+        const userData = userDoc.exists() ? { 
+          id: commentData.userId, // Add the user ID here
+          ...userDoc.data() 
+        } : null;
+
         comments.push({
           id: commentDoc.id,
           ...commentData,
@@ -411,7 +432,7 @@ export const commentService = {
           timeAgo: formatTimeAgo(commentData.createdAt)
         });
       }
-      
+
       return comments;
     } catch (error) {
       console.error('Error fetching comments:', error);
@@ -470,6 +491,14 @@ export const commentService = {
     }
   }
 };
+
+
+
+
+
+
+
+
 
 
 

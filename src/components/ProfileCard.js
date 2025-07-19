@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { postService } from '../services/dataService';
 import UserAvatar from './UserAvatar';
@@ -39,12 +40,16 @@ function ProfileCard({ refreshTrigger, onMyItemsClick }) {
       <div className="px-4 pb-4">
         {/* Avatar */}
         <div className="flex justify-center -mt-8 mb-4">
-          <UserAvatar name={user.name} size="lg" className="border-4 border-white" />
+          <Link to="/profile">
+            <UserAvatar name={user.name} size="lg" className="border-4 border-white" />
+          </Link>
         </div>
         
         {/* User Info */}
         <div className="text-center">
-          <h3 className="font-semibold text-gray-900 text-base hover:underline cursor-pointer">{user.name}</h3>
+          <Link to="/profile" className="font-semibold text-gray-900 text-base hover:underline cursor-pointer">
+            {user.name}
+          </Link>
           {user.title && (
             <p className="text-sm text-gray-600 mt-1 leading-tight">{user.title}</p>
           )}
@@ -93,6 +98,10 @@ function ProfileCard({ refreshTrigger, onMyItemsClick }) {
 }
 
 export default ProfileCard;
+
+
+
+
 
 
 

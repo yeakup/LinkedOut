@@ -11,6 +11,7 @@ import './index.css';
 const Home = lazy(() => import('./pages/Home'));
 const About = lazy(() => import('./pages/About'));
 const Contact = lazy(() => import('./pages/Contact'));
+const Profile = lazy(() => import('./pages/Profile'));
 
 function AppContent() {
   const { user, loading } = useAuth();
@@ -28,6 +29,7 @@ function AppContent() {
               <Route path="/" element={<Home />} />
               <Route path="/about" element={<><Navbar /><About /></>} />
               <Route path="/contact" element={<><Navbar /><Contact /></>} />
+              <Route path="/profile/:userId?" element={<Profile />} />
             </Routes>
           </Suspense>
         </main>
@@ -50,6 +52,7 @@ function App() {
 }
 
 export default App;
+
 
 
 

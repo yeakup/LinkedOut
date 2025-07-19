@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { commentService } from '../services/dataService';
 import { useAuth } from '../contexts/AuthContext';
+import { Link } from 'react-router-dom';
 import UserAvatar from './UserAvatar';
 
 function CommentSection({ postId, commentCount, showCommentForm, onToggleCommentForm, onCommentAdded }) {
@@ -87,7 +88,9 @@ function CommentSection({ postId, commentCount, showCommentForm, onToggleComment
       {/* Comment Form */}
       {showCommentForm && (
         <form onSubmit={handleAddComment} className="mt-3 flex items-start space-x-3">
-          <UserAvatar name={user?.name} size="sm" />
+          <Link to={`/profile/${user?.id}`}>
+            <UserAvatar name={user?.name} size="sm" />
+          </Link>
           <div className="flex-1">
             <textarea
               value={newComment}
@@ -123,11 +126,18 @@ function CommentSection({ postId, commentCount, showCommentForm, onToggleComment
             const isLiked = likedComments.has(comment.id);
             return (
               <div key={comment.id} className="flex items-start space-x-3">
-                <UserAvatar name={comment.user?.name} size="sm" />
+                <Link to={`/profile/${comment.user?.id}`}>
+                  <UserAvatar name={comment.user?.name} size="sm" />
+                </Link>
                 <div className="flex-1">
                   <div className="bg-gray-100 rounded-lg p-3">
                     <div className="flex items-center space-x-2 mb-1">
-                      <span className="font-semibold text-sm">{comment.user?.name}</span>
+                      <Link 
+                        to={`/profile/${comment.user?.id}`}
+                        className="font-semibold text-sm hover:underline"
+                      >
+                        {comment.user?.name}
+                      </Link>
                       <span className="text-xs text-gray-500">{comment.timeAgo}</span>
                     </div>
                     <p className="text-sm text-gray-900">{comment.content}</p>
@@ -169,6 +179,12 @@ function CommentSection({ postId, commentCount, showCommentForm, onToggleComment
 }
 
 export default CommentSection;
+
+
+
+
+
+
 
 
 

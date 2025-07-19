@@ -1,5 +1,7 @@
 import { useState, useEffect } from 'react';
 import { postService } from '../services/dataService';
+import { Link } from 'react-router-dom';
+import UserAvatar from './UserAvatar';
 
 function LastPosts({ refreshTrigger, onPostClick }) {
   const [mostLikedPosts, setMostLikedPosts] = useState([]);
@@ -61,6 +63,9 @@ function LastPosts({ refreshTrigger, onPostClick }) {
 }
 
 export default LastPosts;
+
+
+
 
 
 

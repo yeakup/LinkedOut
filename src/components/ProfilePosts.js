@@ -2,99 +2,49 @@ import { useState, useEffect } from 'react';
 import { postService, likeService } from '../services/dataService';
 import { useAuth } from '../contexts/AuthContext';
 import { Link } from 'react-router-dom';
-import AddPost from './AddPost';
 import UserAvatar from './UserAvatar';
 import CommentSection from './CommentSection';
 
-function MainFeed({ onPostAdded, onLikeChanged, filterUserId, searchTerm, selectedPostId }) {
+function ProfilePosts({ userId, onLikeChanged }) {
   const [posts, setPosts] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [loadingMore, setLoadingMore] = useState(false);
-  const [hasMore, setHasMore] = useState(true);
   const [likedPosts, setLikedPosts] = useState(new Set());
   const [showCommentForms, setShowCommentForms] = useState(new Set());
   const { user } = useAuth();
 
-  const fetchPosts = async (loadMore = false) => {
-    if (!user?.id) return;
-    
-    try {
-      if (loadMore) {
-        setLoadingMore(true);
-      } else {
-        setLoading(true);
-      }
-
-      const lastPostId = loadMore && posts.length > 0 ? posts[posts.length - 1].id : null;
-      let allPosts = [];
-      
-      if (selectedPostId) {
-        // Fetch specific post
-        const post = await postService.getPostById(selectedPostId);
-        allPosts = post ? [post] : [];
-        setHasMore(false);
-      } else if (searchTerm) {
-        allPosts = await postService.searchPosts(searchTerm);
-        setHasMore(false);
-      } else if (filterUserId) {
-        allPosts = await postService.getPostsByUser(filterUserId);
-        setHasMore(false);
-      } else {
-        allPosts = await postService.getAllPosts(7, lastPostId);
-        setHasMore(allPosts.length === 7);
-      }
-      
-      if (loadMore && !selectedPostId && !searchTerm && !filterUserId) {
-        setPosts(prevPosts => [...prevPosts, ...allPosts]);
-      } else {
-        setPosts(allPosts);
-      }
-      
-      // Check which posts are liked by current user
-      const likedPostIds = new Set(loadMore && !selectedPostId && !searchTerm && !filterUserId ? likedPosts : []);
-      for (const post of allPosts) {
-        const isLiked = await likeService.checkIfLiked(post.id, user.id);
-        if (isLiked) {
-          likedPostIds.add(post.id);
+  useEffect(() => {
+    const fetchPosts = async () => {
+      try {
+        const userPosts = await postService.getPostsByUser(userId);
+        setPosts(userPosts);
+        
+        // Check which posts are liked by current user
+        if (user?.id) {
+          const likedPostIds = new Set();
+          for (const post of userPosts) {
+            const isLiked = await likeService.checkIfLiked(post.id, user.id);
+            if (isLiked) {
+              likedPostIds.add(post.id);
+            }
+          }
+          setLikedPosts(likedPostIds);
         }
-      }
-      setLikedPosts(likedPostIds);
-    } catch (error) {
-      console.error('Error fetching posts:', error);
-    } finally {
-      if (loadMore) {
-        setLoadingMore(false);
-      } else {
+      } catch (error) {
+        console.error('Error fetching user posts:', error);
+      } finally {
         setLoading(false);
       }
-    }
-  };
+    };
 
-  useEffect(() => {
-    if (user?.id) {
-      setHasMore(true);
+    if (userId && user?.id) {
       fetchPosts();
     }
-  }, [filterUserId, searchTerm, selectedPostId, user?.id]);
-
-  const handleLoadMore = () => {
-    if (!loadingMore && hasMore) {
-      fetchPosts(true);
-    }
-  };
-
-  const handlePostAdded = (newPost) => {
-    setPosts(prevPosts => [newPost, ...prevPosts]);
-    if (onPostAdded) {
-      onPostAdded();
-    }
-  };
+  }, [userId, user?.id]);
 
   const handleLike = async (postId) => {
     try {
       const result = await likeService.toggleLike(postId, user.id);
       
-      // Update local state
       const newLikedPosts = new Set(likedPosts);
       if (result.isLiked) {
         newLikedPosts.add(postId);
@@ -103,7 +53,6 @@ function MainFeed({ onPostAdded, onLikeChanged, filterUserId, searchTerm, select
       }
       setLikedPosts(newLikedPosts);
       
-      // Update posts with new like count
       setPosts(prevPosts => 
         prevPosts.map(post => 
           post.id === postId 
@@ -144,7 +93,6 @@ function MainFeed({ onPostAdded, onLikeChanged, filterUserId, searchTerm, select
   if (loading) {
     return (
       <div className="space-y-4">
-        <AddPost onPostAdded={handlePostAdded} />
         {[1, 2, 3].map(i => (
           <div key={i} className="bg-white rounded-lg border border-gray-200 p-4">
             <div className="flex items-start space-x-3">
@@ -163,10 +111,18 @@ function MainFeed({ onPostAdded, onLikeChanged, filterUserId, searchTerm, select
     );
   }
 
+  if (posts.length === 0) {
+    return (
+      <div className="bg-white rounded-lg border border-gray-200 p-8 text-center">
+        <p className="text-gray-500">No posts yet</p>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-4">
-      <AddPost onPostAdded={handlePostAdded} />
-
+      <h2 className="text-xl font-bold text-gray-900 mb-4">Posts</h2>
+      
       {posts.map(post => {
         const isLiked = likedPosts.has(post.id);
         const likesCount = post.likes || 0;
@@ -241,80 +197,11 @@ function MainFeed({ onPostAdded, onLikeChanged, filterUserId, searchTerm, select
           </div>
         );
       })}
-
-      {/* Load More Button - only show when not loading more */}
-      {hasMore && !selectedPostId && !searchTerm && !filterUserId && !loadingMore && (
-        <div className="flex justify-center pt-4">
-          <button
-            onClick={handleLoadMore}
-            className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
-          >
-            Load More
-          </button>
-        </div>
-      )}
-
-      {/* Loading More Skeleton */}
-      {loadingMore && (
-        <div className="space-y-4">
-          {[1, 2, 3].map(i => (
-            <div key={`loading-${i}`} className="bg-white rounded-lg border border-gray-200 p-4">
-              <div className="flex items-start space-x-3">
-                <div className="w-12 h-12 bg-gray-200 rounded-full animate-pulse"></div>
-                <div className="flex-1 space-y-2">
-                  <div className="h-4 bg-gray-200 rounded w-1/4 animate-pulse"></div>
-                  <div className="space-y-2">
-                    <div className="h-4 bg-gray-100 rounded animate-pulse"></div>
-                    <div className="h-4 bg-gray-100 rounded w-5/6 animate-pulse"></div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
-
     </div>
   );
 }
 
-export default MainFeed;
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+export default ProfilePosts;
 
 
 

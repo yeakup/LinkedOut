@@ -1,16 +1,30 @@
 import { useState, useEffect } from 'react';
+import { useSearchParams, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import ProfileCard from '../components/ProfileCard';
 import MainFeed from '../components/MainFeed';
 import LastPosts from '../components/LastPosts';
+import Ads from '../components/Ads';
 import Navbar from '../components/Navbar';
 
 function Home() {
+  const [searchParams, setSearchParams] = useSearchParams();
+  const location = useLocation();
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   const [filterUserId, setFilterUserId] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedPostId, setSelectedPostId] = useState(null);
   const { user } = useAuth();
+
+  // Check for post parameter in URL
+  useEffect(() => {
+    const postParam = new URLSearchParams(location.search).get('post');
+    if (postParam) {
+      setSelectedPostId(postParam);
+      setFilterUserId(null);
+      setSearchTerm('');
+    }
+  }, [location.search]);
 
   const handlePostAdded = () => {
     setRefreshTrigger(prev => prev + 1);
@@ -40,6 +54,7 @@ function Home() {
     setFilterUserId(null);
     setSearchTerm('');
     setSelectedPostId(null);
+    setSearchParams({}); // Clear URL params
   };
 
   return (
@@ -81,6 +96,7 @@ function Home() {
               </div>
             )}
             <MainFeed 
+              key={selectedPostId ? `post-${selectedPostId}` : 'all-posts'}
               onPostAdded={handlePostAdded} 
               onLikeChanged={handleLikeChanged}
               filterUserId={filterUserId}
@@ -91,10 +107,13 @@ function Home() {
 
           {/* Right Sidebar - Last Posts */}
           <div className="lg:col-span-1">
-            <LastPosts 
-              refreshTrigger={refreshTrigger} 
-              onPostClick={handlePostClick}
-            />
+            <div className="space-y-4">
+              <LastPosts 
+                refreshTrigger={refreshTrigger} 
+                onPostClick={handlePostClick}
+              />
+              <Ads />
+            </div>
           </div>
         </div>
       </div>
@@ -103,6 +122,14 @@ function Home() {
 }
 
 export default Home;
+
+
+
+
+
+
+
+
 
 
 
