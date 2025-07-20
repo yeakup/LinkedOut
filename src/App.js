@@ -16,13 +16,21 @@ const Profile = lazy(() => import('./pages/Profile'));
 function AppContent() {
   const { user, loading } = useAuth();
 
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-100 flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+      </div>
+    );
+  }
+
   if (!user) {
     return <LandingPage />;
   }
 
   return (
     <Router>
-      <div className="min-h-screen bg-gray-50 flex flex-col">
+      <div className="min-h-screen bg-gray-100 flex flex-col">
         <main className="flex-1">
           <Suspense fallback={null}>
             <Routes>
@@ -52,6 +60,7 @@ function App() {
 }
 
 export default App;
+
 
 
 

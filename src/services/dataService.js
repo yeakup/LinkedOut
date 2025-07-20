@@ -35,7 +35,7 @@ export const userService = {
       const userDoc = await getDoc(doc(db, 'users', userId));
       if (userDoc.exists()) {
         return {
-          id: userDoc.id,
+          id: userId,
           ...userDoc.data()
         };
       }
@@ -491,6 +491,7 @@ export const commentService = {
     }
   }
 };
+
 
 
 

@@ -32,10 +32,8 @@ function CommentSection({ postId, commentCount, showCommentForm, onToggleComment
   };
 
   useEffect(() => {
-    if (commentCount > 0) {
-      fetchComments();
-    }
-  }, [postId, commentCount]);
+    fetchComments();
+  }, [postId]);
 
   const handleAddComment = async (e) => {
     e.preventDefault();
@@ -179,6 +177,7 @@ function CommentSection({ postId, commentCount, showCommentForm, onToggleComment
 }
 
 export default CommentSection;
+
 
 
 

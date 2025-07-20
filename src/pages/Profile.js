@@ -10,7 +10,7 @@ import ProfilePosts from '../components/ProfilePosts';
 function Profile() {
   const { userId } = useParams();
   const navigate = useNavigate();
-  const { user: currentUser } = useAuth();
+  const { user: currentUser, loading: authLoading } = useAuth();
   const [profileUser, setProfileUser] = useState(null);
   const [userStats, setUserStats] = useState({
     postsCount: 0,
@@ -30,37 +30,40 @@ function Profile() {
 
   useEffect(() => {
     const fetchProfile = async () => {
+      setLoading(true);
       try {
         const targetUserId = userId || currentUser?.id;
         
-        if (targetUserId === currentUser?.id) {
-          setProfileUser(currentUser);
-        } else {
-          // Try userService.getUserById first
-          const user = await userService.getUserById(targetUserId);
-          if (user) {
-            setProfileUser(user);
-          } else {
-            // Fallback: get user from posts
-            const allPosts = await postService.getAllPosts(100);
-            const userPost = allPosts.find(post => post.user?.id === targetUserId);
-            
-            if (userPost) {
-              setProfileUser(userPost.user);
-            } else {
-              setProfileUser(null);
-              setLoading(false);
-              return;
-            }
-          }
+        if (!targetUserId) {
+          setProfileUser(null);
+          setLoading(false);
+          return;
         }
 
-        // Fetch user stats
-        const userPosts = await postService.getPostsByUser(targetUserId);
-        const postsCount = userPosts.length;
-        const totalLikes = userPosts.reduce((sum, post) => sum + (post.likes || 0), 0);
+        // Get user from Firestore
+        const user = await userService.getUserById(targetUserId);
         
-        setUserStats({ postsCount, totalLikes });
+        if (user) {
+          setProfileUser(user);
+          // Fetch user stats
+          const userPosts = await postService.getPostsByUser(targetUserId);
+          const postsCount = userPosts.length;
+          const totalLikes = userPosts.reduce((sum, post) => sum + (post.likes || 0), 0);
+          setUserStats({ postsCount, totalLikes });
+        } else if (targetUserId === currentUser?.id) {
+          // If it's the current user but not found in Firestore, use auth data
+          setProfileUser({
+            id: currentUser.id,
+            name: currentUser.name,
+            email: currentUser.email,
+            title: currentUser.title || '',
+            company: currentUser.company || '',
+            location: currentUser.location || ''
+          });
+          setUserStats({ postsCount: 0, totalLikes: 0 });
+        } else {
+          setProfileUser(null);
+        }
       } catch (error) {
         console.error('Error fetching profile:', error);
         setProfileUser(null);
@@ -69,12 +72,12 @@ function Profile() {
       }
     };
 
-    if (currentUser?.id) {
+    if (!authLoading) {
       fetchProfile();
     }
-  }, [userId, currentUser, refreshTrigger]);
+  }, [userId, currentUser?.id, refreshTrigger, authLoading]);
 
-  if (loading) {
+  if (authLoading || loading) {
     return (
       <>
         <Navbar />
@@ -186,6 +189,12 @@ function Profile() {
 }
 
 export default Profile;
+
+
+
+
+
+
 
 
 
